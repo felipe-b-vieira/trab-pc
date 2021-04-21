@@ -67,6 +67,20 @@ def criarmatriz(m):
     return novo
 
 
+def criarArray(a):
+    entrada = open(a, 'r', encoding='utf8')
+    novo = []
+    for linha in entrada.readlines():
+        for x in linha.split(" "):
+            if x[0] == '−':
+                novo.append(-float(x[1:]))
+            else:
+                novo.append(float(x))
+    entrada.close()
+    print(novo)
+    return novo
+
+
 def transpostalista(m):
     res = [[0]]*altura(m)
     print(res)
