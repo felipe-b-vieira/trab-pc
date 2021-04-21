@@ -67,6 +67,8 @@ def grad_conj(m, b, eps=1e-5):
         # Acha o próximo d(diferença)
         d = - gradi + d * betai
         grad0 = gradi
+
+        i += 1
     return x
 
 
