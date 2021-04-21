@@ -2,6 +2,7 @@ import matriz as mtz
 import numpy as np
 from scipy.sparse.linalg import cg
 import time
+from scipy.sparse import csr_matrix, linalg
 
 # Dado um Xo
 # rk = b - Axk
@@ -22,55 +23,83 @@ import time
 
 # O gradiente conjugado busca fazer em poucos passos
 # A ideia do gradiente conjugado é pegar só o ultimo gradiente e ajustar ele
-def grad_conj(m, b, x0=None, eps=1e-5, maxiter=10):
-
-    n = len(b)
+def grad_conj(m, b, x0=None, eps=1e-5, maxiter=100):
+    n = b.shape[0]
+    # Se precisar zerar a matriz, então ela não pode ser densa inicialmente, converto em densa e torno esparsa depois
     if not x0:
-        x = np.zeros(n)
+        x = np.zeros((n,n))
+    grad0 = m.multiply(x)
+    grad0 = grad0 - b
+    grad0 = csr_matrix(grad0)
+    x = csr_matrix(x)
         
-    # np.dot é multiplicação de Matriz
-    grad0 = np.dot(m, x) - b      
+    # Abaixo é tudo aplicação das fórmulas
     d = - grad0     
-    # POSSÍVEL ERROS NOS CÁLCULOS
-    # NÃO É ERRO, TIRAR O ROUND
     for i in range(maxiter):
-        print("----------------------")
-        print(grad0)
+        print("---------------------")
+        print("-----EXECUÇÃO "+str(i)+"------")
+        print("---------------------")
+        print("Gradiente: ")
+        # print(grad0)
+        print("\n")
         
         # Alpha é multiplicação de d transposto e d dividido por d transposto vezes M, vezes d
+        # np.dot funciona em matriz esparsa mas a matriz resultado não vai ser esparsa
         alpha = np.dot(grad0.T, grad0) / np.dot(np.dot(d.T, m), d)
         
         # Xi+1 é xi+ di * alphai
-        x = x + d*(alpha[0])
-        print(x)
+        # Multiply não é multiplicação da matriz, é multiplicação dos valores
+        y = d.multiply(alpha[0])
+        print(x.shape)
+        print(y.tocsr().shape)
+        print(type(x))
+        print(type(y.tocsr()))
+        x = x + y.tocsr()
         
-        gradi = grad0 + np.dot(m*(alpha[0]), d)
-        print(gradi)
+        print("X: ")
+        print(x)
+        print("\n")
+        
+        # Gera a próxima iteração do gradiente
+        gradi = m.multiply(alpha[0])
+        gradi = np.dot(gradi, d)
+        gradi = grad0 + gradi
+        # print(gradi)
         
         # Norma matricial que é feita como condição de parada
-        #print(i, np.linalg.norm(gradi))
-        if np.linalg.norm(gradi) < eps:
-            return np.round(x, 2)
+        # Se ele continuar executando sem entrar aqui ele vai virar nan
+        print("Condição de parada:")
+        print(i, linalg.norm(gradi))
+        print("\n")
+        if linalg.norm(gradi) < eps:
+            return x
             
+        # Mesma coisa que o alpha
         betai = np.dot(gradi.T, gradi) / np.dot(grad0.T, grad0)
-        print(betai)
+        print("BetaI ")
+        # print(betai)
+        print("\n")
         
-        d = - gradi + (betai[0])*d
+        #Acha o próximo d(diferença)
+        d = d.multiply(betai[0])
+        d = - gradi + d
         grad0 = gradi
-        print(grad0)
         
-    return np.round(x, 2)
+    return x
     
 
 if __name__ == '__main__':
     #coeficientes = input("Insira o nome do primeiro arquivo (coeficientes da Matriz):")
     #valores = input("Insira o nome do segundo arquivo (valores b):")
-    mat = np.array(mtz.criarmatriz("matriz.txt"))
+    mat = csr_matrix(np.array(mtz.criarmatriz("matriz.txt")))
     val = np.array(mtz.criarmatriz("valores.txt"))
     start_time = time.time()
-    gc = grad_conj(mat, val)
+    print("----------------------")
+    # Uso o todense só para printar
+    gc = grad_conj(mat, val).toarray()
     res = open("resposta.txt", "w")
-    for i in range(len(gc[0])):
+    print("Resultado:")
+    for i in range(len(gc)):
         res.write(str(gc[i][0]))
         print(gc[i][0])
         res.write("\n")
