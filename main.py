@@ -19,8 +19,8 @@ import matriz as mtz
 
 # Método do gradiente:
 # Busca utilizar o resíduo da diferença entre o resultado inicial e final e usar isso para aproximar da solução
-# O gradiente é a direção do maior crescimento. O gradiente é - f(x), dado f(x) = Ax* - b
-# O gradinte normal realiza diversos passos em ortogonal.
+# O gradiente é a direção do maior crescimento. O gradiente é - f(x), dado f(x) = Ax - b
+# O gradiente normal realiza diversos passos em ortogonal.
 # Aproxima várias vezes, invés de tentar seguir direto ao resultado
 
 # O gradiente conjugado busca fazer em poucos passos
@@ -73,10 +73,8 @@ def grad_conj(m, b, eps=1e-5):
 
 
 if __name__ == '__main__':
-    # coeficientes = input("Insira o nome do primeiro arquivo (coeficientes da Matriz):")
-    # valores = input("Insira o nome do segundo arquivo (valores b):")
-    mat = csr_matrix(mtz.criarmatriz("matriz.txt"))
-    val = np.array(mtz.criarArray("valores.txt"))
+    mat = csr_matrix(mtz.carregar_matriz("matriz.txt"))  # inicializa CSR pela tripla (vAA, vIA, vJA)
+    val = np.array(mtz.carregar_valores("valores.txt"))
     start_time = time.time()
     print("----------------------")
     gc = grad_conj(mat, val)
